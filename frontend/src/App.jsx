@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ServiceCard from "./components/ServiceCard";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/$/, "");
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL || "").trim();
+const API_BASE = rawApiBase ? rawApiBase.replace(/\/$/, "") : "";
+const WS_BASE = rawApiBase
+  ? rawApiBase.replace(/^http/i, "ws").replace(/\/$/, "")
+  : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
 
 function App() {
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -212,8 +216,7 @@ function App() {
     let disposed = false;
 
     const connect = () => {
-      const wsBase = API_BASE.replace(/^http/i, "ws");
-      socket = new WebSocket(`${wsBase}/ws/logs?token=${encodeURIComponent(token)}&limit=100`);
+      socket = new WebSocket(`${WS_BASE}/ws/logs?token=${encodeURIComponent(token)}&limit=100`);
       setWsState("connecting");
 
       socket.onopen = () => {
@@ -387,4 +390,3 @@ function App() {
 }
 
 export default App;
-
