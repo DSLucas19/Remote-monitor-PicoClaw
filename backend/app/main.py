@@ -89,9 +89,10 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+    origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -116,5 +117,14 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+# Uvicorn needs `app` at module level (referenced as `app.main:app`), but during
+# test collection pytest also imports this module. Calling create_app() without
+# env vars set raises a validation error. So we guard with a try/except: if
+# required settings are missing, we skip eager creation — tests use create_app()
+# directly with explicit settings overrides.
+try:
+    app = create_app()
+except Exception:
+    # Likely missing env vars during test collection; tests create their own app.
+    app = None  # type: ignore[assignment]
 

@@ -277,7 +277,7 @@ function App() {
       <main className="layout login-layout">
         <section className="panel login-panel">
           <h1>Remote Monitor Dashboard</h1>
-          <p>Nhap API key de tao session.</p>
+          <p>Enter your API key to create a session.</p>
           <form onSubmit={handleLogin}>
             <input
               type="password"

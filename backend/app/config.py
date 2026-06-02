@@ -1,4 +1,6 @@
 from functools import lru_cache
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,23 +15,24 @@ class Settings(BaseSettings):
     app_port: int = 8080
     app_name: str = "Remote Monitor Dashboard"
     app_log_buffer_size: int = 5000
+    cors_origins: str = "*"
 
     database_url: str = "sqlite:///./dashboard.db"
-    jwt_secret: str = "change-this-secret"
+    jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 120
-    initial_admin_key: str = "change-me-now"
+    initial_admin_key: str = ""
 
     health_poll_seconds: float = 2.0
     startup_wait_seconds: float = 45.0
     stop_timeout_seconds: float = 8.0
 
-    metaclaw_workdir: str = r"C:\Users\Chi Minh Gay\Downloads\MetaClaw-0.3.3\MetaClaw-0.3.3"
+    metaclaw_workdir: str = "."
     metaclaw_command: str = "py -m metaclaw start"
     metaclaw_port: int = 30000
     metaclaw_log_file: str = ""
 
-    picoclaw_workdir: str = r"C:\Users\Chi Minh Gay\Downloads\picoclaw_Windows_x86_64"
+    picoclaw_workdir: str = "."
     picoclaw_command: str = "picoclaw-launcher.exe"
     picoclaw_port: int = 18800
     picoclaw_log_file: str = ""
@@ -43,6 +46,18 @@ class Settings(BaseSettings):
     gateway_retries: int = 3
     gateway_backoff_seconds: float = 2.0
     gateway_min_interval_seconds: float = 20.0
+
+    @model_validator(mode="after")
+    def _require_secrets(self) -> "Settings":
+        if not self.jwt_secret:
+            raise ValueError(
+                "JWT_SECRET is required. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+            )
+        if not self.initial_admin_key:
+            raise ValueError(
+                "INITIAL_ADMIN_KEY is required. Generate one with: python -c \"import secrets; print('rmk_' + secrets.token_urlsafe(32))\""
+            )
+        return self
 
 
 @lru_cache(maxsize=1)
